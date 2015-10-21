@@ -20,13 +20,6 @@ On startup, a processor generates some uuid and initiates its freshness:
 redis-cli set processor_$id $(date +%s)
 ```
 
-One or more processes move random tasks from the 'todo' set to their own active set
-
-```bash
-task="$(redis-cli --raw spop todo)"
-redis-cli sadd active_$id $task
-```
-
 Every n seconds, every task processor refreshes its freshness key
 
 ```bash
@@ -34,6 +27,13 @@ redis-cli set processor_$id $(date +%s)
 ```
 
 On clean shutdown, a task processor cleans up after itself:
+
+One or more processes move random tasks from the 'todo' set to their own active set
+
+```bash
+task="$(redis-cli --raw spop todo)"
+redis-cli sadd active_$id $task
+```
 
 ```bash
 redis-cli del processor_$id
@@ -60,3 +60,12 @@ do
 		MINTIME=$(date +"%s" -d "$TIMEDIFF seconds ago"
 	fi
 done
+
+# tasks
+
+Tasks are added to the todo set, and to a second hash containing the metadata about the task:
+
+```bash
+redis-cli sadd todo $task
+redis-cli hset task_info $task "src:/srcpath/a,dst:/dstpath/a,..." # or some other encoding
+```
